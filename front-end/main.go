@@ -4,46 +4,43 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
+	"text/template"
 )
 
 func main() {
-	r := gin.Default()
-
-	// 自定义HTML渲染
-	// r.SetHTMLTemplate(loadTemplates())
-	r.LoadHTMLGlob("./cmd/web/templates/*")
-
-	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "test.page.html", nil)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		render(w, "test.page.html")
 	})
 
 	fmt.Println("Starting front end service on port 80")
-	if err := r.Run(":80"); err != nil {
+	err := http.ListenAndServe(":80", nil)
+	if err != nil {
 		log.Panic(err)
 	}
 }
 
 // 加载模板
-// func loadTemplates() *template.Template {
-// 	partials := []string{
-// 		"./cmd/web/templates/base.layout.html",
-// 		"./cmd/web/templates/header.partial.html",
-// 		"./cmd/web/templates/footer.partial.html",
-// 	}
+func render(w http.ResponseWriter, t string) {
+	partials := []string{
+		"./cmd/web/templates/base.layout.html",
+		"./cmd/web/templates/header.partial.html",
+		"./cmd/web/templates/footer.partial.html",
+	}
 
-// 	// 需要解析的页面
-// 	pages := []string{
-// 		"./cmd/web/templates/test.page.html",
-// 	}
+	var templateSlice []string
+	templateSlice = append(templateSlice, fmt.Sprintf("./cmd/web/templates/%s", t))
 
-// 	// 合并所有模板
-// 	allTemplates := append(pages, partials...)
+	for _, x := range partials {
+		templateSlice = append(templateSlice, x)
+	}
 
-// 	tmpl, err := template.ParseFiles(allTemplates...)
-// 	if err != nil {
-// 		log.Panicf("Failed to load templates: %v", err)
-// 	}
-// 	return tmpl
-// }
+	tmpl, err := template.ParseFiles(templateSlice...)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err = tmpl.Execute(w, nil); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
