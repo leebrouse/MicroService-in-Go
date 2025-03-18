@@ -1,1 +1,0 @@
-# The makefile only can be used by the Operating System that is Linux or Mac.

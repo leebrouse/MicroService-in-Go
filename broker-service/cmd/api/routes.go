@@ -15,8 +15,10 @@ type jsonResonse struct {
 }
 
 func (app *Config) routes() http.Handler {
+	//create a new router
 	mux := chi.NewRouter()
 
+	//set router limitors
 	mux.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -26,8 +28,10 @@ func (app *Config) routes() http.Handler {
 		MaxAge:           300,
 	}))
 
+	//add a middleware that can be a load balancers
 	mux.Use(middleware.Heartbeat("/ping"))
 
+	//broker service
 	mux.Post("/", app.Broker)
 	return mux
 }

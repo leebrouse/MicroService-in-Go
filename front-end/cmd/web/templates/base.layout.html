@@ -1,6 +1,7 @@
 {{define "base"}}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,20 +13,24 @@
             padding: 20px;
             text-align: center;
         }
+
         .container {
             max-width: 800px;
             margin: 0 auto;
         }
+
         .output-box {
             border: 1px solid #ccc;
             padding: 10px;
             min-height: 50px;
             margin-bottom: 20px;
         }
+
         .row {
             display: flex;
             justify-content: space-between;
         }
+
         .column {
             flex: 1;
             border: 1px solid #ccc;
@@ -35,14 +40,18 @@
         }
     </style>
 </head>
+
 <body>
-    {{template "header" .}}  <!-- 引入 header -->
+    {{template "header" .}} <!-- 引入 header -->
 
     <div class="container">
         {{block "content" .}}{{end}}
     </div>
 
-    {{template "footer" .}}  <!-- 引入 footer -->
+    {{template "footer" .}} <!-- 引入 footer -->
+
+    {{template "js" .}}
 </body>
+
 </html>
 {{end}}
