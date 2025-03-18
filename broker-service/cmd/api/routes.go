@@ -8,6 +8,12 @@ import (
 	"github.com/go-chi/cors"
 )
 
+type jsonResonse struct {
+	Error   bool   `json:"error"`
+	Message string `json:"message"`
+	Data    any    `json:"data,omitempty"`
+}
+
 func (app *Config) routes() http.Handler {
 	mux := chi.NewRouter()
 
