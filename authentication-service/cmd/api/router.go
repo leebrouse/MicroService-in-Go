@@ -20,5 +20,6 @@ func (app *Config) router() http.Handler {
 		MaxAge:           300,
 	}))
 
+
 	return mux
 }

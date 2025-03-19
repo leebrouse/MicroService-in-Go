@@ -10,9 +10,9 @@ import (
 
 	"github.com/leebrouse/MicroService-in-Go/authentication-service/data"
 
-	_ "github.com/jackc/pgx/v4/stdlib"
 	_ "github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4"
+	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 const webPort = "80"
@@ -29,7 +29,7 @@ func main() {
 	log.Println("Starting authentication service")
 	//TODO: connect the database
 	conn := connectToDB()
-	if conn != nil {
+	if conn == nil {
 		log.Panicln("Can`t connect to the Postgres")
 	}
 	//set config
@@ -52,12 +52,13 @@ func main() {
 // open db
 func openDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("pgx", dsn)
+
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.Ping()
-	if err != nil {
+	if err = db.Ping(); err != nil {
+		db.Close() // 避免泄漏
 		return nil, err
 	}
 
@@ -68,6 +69,7 @@ func openDB(dsn string) (*sql.DB, error) {
 func connectToDB() *sql.DB {
 	//using os package to grab the dsn
 	dsn := os.Getenv("DSN")
+	fmt.Println(dsn)
 	//loop and the max count can`t surpass 3 times
 	for {
 		//call openDB
