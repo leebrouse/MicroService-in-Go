@@ -39,6 +39,6 @@ func (app *Config) Authentication(w http.ResponseWriter, r *http.Request) {
 		Data:    user,
 	}
 
-	//4. Writing the jsonResponse
-	app.writeJSON(w, http.StatusOK, payload)
+	//4. Writing the jsonResponse and send the 202 as statusCode
+	app.writeJSON(w, http.StatusAccepted, payload)
 }
