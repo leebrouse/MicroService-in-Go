@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -32,6 +34,13 @@ func (app *Config) Authentication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log authentication
+	err = app.logRequest("authentication", fmt.Sprintf("%s logged in", user.Email))
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
 	//3. Create Payload struct jsonResponse
 	payload := jsonResponse{
 		Error:   false,
@@ -41,4 +50,31 @@ func (app *Config) Authentication(w http.ResponseWriter, r *http.Request) {
 
 	//4. Writing the jsonResponse and send the 202 as statusCode
 	app.writeJSON(w, http.StatusAccepted, payload)
+}
+
+func (app *Config) logRequest(name, data string) error {
+	var entry struct {
+		Name string
+		Data string
+	}
+	entry.Name = name
+	entry.Data = data
+
+	//create some json we`ll sent ro the auth microservice
+	jsonData, _ := json.MarshalIndent(entry, "", "\t")
+
+	//call the service
+	request, err := http.NewRequest("POST", "http://log-service/log", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+
+	//Create a new client to POST the request
+	client := &http.Client{}
+	_, err = client.Do(request)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
