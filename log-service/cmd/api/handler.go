@@ -11,6 +11,7 @@ type JSONPayload struct {
 	Data string `json:"data"`
 }
 
+// insert logs into mongo and sent respose to the broker-service
 func (app *Config) WriteLog(w http.ResponseWriter, r *http.Request) {
 	//TODO:
 	var requestPayload JSONPayload
@@ -27,6 +28,7 @@ func (app *Config) WriteLog(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, err)
 	}
 
+	//return response to the broker
 	resp := jsonResponse{
 		Error:   false,
 		Message: "logged",
