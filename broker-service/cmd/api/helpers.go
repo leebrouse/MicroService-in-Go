@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"maps"
 	"net/http"
 )
 
 type jsonResponse struct {
-	Error bool `json:"error"`
+	Error   bool   `json:"error"`
 	Message string `json:"message"`
-	Data any `json:"data,omitempty"`
+	Data    any    `json:"data,omitempty"`
 }
 
 // readJSON tries to read the body of a request and converts it into JSON
@@ -25,6 +26,7 @@ func (app *Config) readJSON(w http.ResponseWriter, r *http.Request, data any) er
 		return err
 	}
 
+	// check whether have rest json request in the struct
 	err = dec.Decode(&struct{}{})
 	if err != io.EOF {
 		return errors.New("Body must have only a single JSON value")
@@ -41,9 +43,7 @@ func (app *Config) writeJSON(w http.ResponseWriter, status int, data any, header
 	}
 
 	if len(headers) > 0 {
-		for key, value := range headers[0] {
-			w.Header()[key] = value
-		}
+		maps.Copy(w.Header(), headers[0])
 	}
 
 	w.Header().Set("Content-Type", "application/json")
