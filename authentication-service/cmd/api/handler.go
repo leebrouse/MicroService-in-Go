@@ -52,6 +52,7 @@ func (app *Config) Authentication(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusAccepted, payload)
 }
 
+// put the auth operation to the mongoDB for logging
 func (app *Config) logRequest(name, data string) error {
 	var entry struct {
 		Name string

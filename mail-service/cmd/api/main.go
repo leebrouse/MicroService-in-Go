@@ -32,6 +32,7 @@ func main() {
 	}
 }
 
+// creater a new mailer
 func NewMail() Mail {
 	port, _ := strconv.Atoi(os.Getenv("MAIL_PORT"))
 

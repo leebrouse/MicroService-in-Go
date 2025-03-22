@@ -37,15 +37,17 @@ func (app *Config) readJSON(w http.ResponseWriter, r *http.Request, data any) er
 
 // writeJSON takes a response status code and arbitrary data and writes a json response to the client
 func (app *Config) writeJSON(w http.ResponseWriter, status int, data any, headers ...http.Header) error {
+	// marshal data
 	out, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 
+	//check headers and set it to the responseWriter
 	if len(headers) > 0 {
 		maps.Copy(w.Header(), headers[0])
 	}
-
+	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_, err = w.Write(out)

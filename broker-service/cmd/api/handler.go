@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/leebrouse/MicroService-in-Go/broker-service/event"
 )
 
 // Main request struct
@@ -58,7 +60,7 @@ func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 	case "auth":
 		app.authentication(w, requestPayload.Auth)
 	case "log":
-		app.logItem(w, requestPayload.Log)
+		app.logEventViaRabbit(w, requestPayload.Log)
 	case "mail":
 		app.sendMail(w, requestPayload.Mail)
 	default:
@@ -231,4 +233,40 @@ func (app *Config) sendMail(w http.ResponseWriter, m MailPayload) {
 	}
 
 	_ = app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *Config) logEventViaRabbit(w http.ResponseWriter, l LogPayload) {
+	err := app.pushToQueue(l.Name, l.Data)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = false
+	payload.Message = "logged via RabbitMQ"
+
+	app.writeJSON(w, http.StatusAccepted, payload)
+}
+
+// push message to the rabbit queue
+func (app *Config) pushToQueue(name, msg string) error {
+	emitter, err := event.NewEventEmitter(app.Rabbit)
+	if err != nil {
+		return err
+	}
+
+	payload := LogPayload{
+		Name: name,
+		Data: msg,
+	}
+
+	j, _ := json.MarshalIndent(payload, "", "\t")
+
+	err = emitter.Push(string(j), "log.INFO")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
