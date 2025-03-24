@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"net/rpc"
 	"time"
 
 	"github.com/leebrouse/MicroService-in-Go/log-serivce/data"
@@ -55,17 +57,19 @@ func main() {
 		Models: data.New(client),
 	}
 
+	//rpc register
+	err = rpc.Register(new(RpcServer))
+	// To listen rpc request
+	go app.rpcListen()
+	//start web server
+	app.serve()
+	
 	/*  Blocking function:
 
 	var forever chan struct{}
 	<-forever
 
 	*/
-
-	var forever chan struct{}
-	//start web server
-	go app.serve()
-	<-forever
 
 }
 
@@ -85,6 +89,28 @@ func (app *Config) serve() {
 	}
 }
 
+// rpc listener
+func (app *Config) rpcListen() error {
+	log.Println("Starting RPC server on port", rpcPort)
+	listener, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", rpcPort))
+	if err != nil {
+		return err
+	}
+	defer listener.Close()
+
+	//listen success and try to accpet message
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			continue
+		}
+
+		go rpc.ServeConn(conn)
+	}
+
+}
+
+// Try to connect mongo
 func connectToMongo() (*mongo.Client, error) {
 	// create connection option
 	clientOptions := options.Client().ApplyURI(mongoURL)

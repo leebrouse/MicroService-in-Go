@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/rpc"
 
 	"github.com/leebrouse/MicroService-in-Go/broker-service/event"
 )
@@ -60,7 +61,9 @@ func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 	case "auth":
 		app.authentication(w, requestPayload.Auth)
 	case "log":
-		app.logEventViaRabbit(w, requestPayload.Log)
+		// app.logItem(w,requestPayload.Log)
+		// app.logEventViaRabbit(w, requestPayload.Log)
+		app.logEventViaRpc(w, requestPayload.Log)
 	case "mail":
 		app.sendMail(w, requestPayload.Mail)
 	default:
@@ -235,6 +238,7 @@ func (app *Config) sendMail(w http.ResponseWriter, m MailPayload) {
 	_ = app.writeJSON(w, http.StatusOK, payload)
 }
 
+// push message to the rabbitmq queue
 func (app *Config) logEventViaRabbit(w http.ResponseWriter, l LogPayload) {
 	err := app.pushToQueue(l.Name, l.Data)
 	if err != nil {
@@ -269,4 +273,37 @@ func (app *Config) pushToQueue(name, msg string) error {
 	}
 
 	return nil
+}
+
+// RpcPayload struct
+type RpcPayload struct {
+	Name string
+	Data string
+}
+
+// Remote call RpcServer via RPC
+func (app *Config) logEventViaRpc(w http.ResponseWriter, l LogPayload) {
+	// rpc dial
+	client, err := rpc.Dial("tcp", "log-service:5001")
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	rpcPayload := RpcPayload{
+		Name: l.Name,
+		Data: l.Data,
+	}
+	var result string
+
+	//rpc call the logInfo function
+	client.Call("RpcServer.LogInfo", rpcPayload, &result)
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: result,
+	}
+
+	app.writeJSON(w, http.StatusAccepted, payload)
+
 }

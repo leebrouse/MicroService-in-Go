@@ -41,6 +41,7 @@ func (consumer *Consumer) setup() error {
 	return declareExchange(channel)
 }
 
+// request from the rabbitmq
 type Payload struct {
 	Name string `json:"name"`
 	Data string `json:"data"`
@@ -99,9 +100,15 @@ func handlePayload(payload Payload) {
 		err := logEvent(payload)
 		if err != nil {
 			log.Println(err)
+			return
 		}
 	case "auth":
 		// auth service
+		err := authEvent(payload)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	default:
 		// call logEvent
 		err := logEvent(payload)
@@ -111,6 +118,56 @@ func handlePayload(payload Payload) {
 	}
 }
 
+// Remot call auth-service
+func authEvent(entry Payload) error {
+	//create some json we`ll sent ro the auth microservice
+	jsonData, _ := json.MarshalIndent(entry, "", "\t")
+
+	//call the service
+	request, err := http.NewRequest("POST", "http://authentication-service/authentication", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+
+	//Create a new client to POST the request
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	//make sure we get back the correct status code
+	if response.StatusCode == http.StatusUnauthorized {
+		return err
+	} else if response.StatusCode != http.StatusAccepted {
+		return err
+	}
+
+	//create a varable we'll read response.body into
+	type jsonResponse struct {
+		Error   bool   `json:"error"`
+		Message string `json:"message"`
+		Data    any    `json:"data,omitempty"`
+	}
+
+	var jsonFromService jsonResponse
+
+	//decode the json from the auth service and input to the jsonFromService struct
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		return err
+	}
+
+	//Check the error message in the jsonFromService body
+	if jsonFromService.Error {
+		return err
+	}
+
+	return nil
+}
+
+// Remote call log-service
 func logEvent(entry Payload) error {
 	//create some json we`ll sent ro the auth microservice
 	jsonData, _ := json.MarshalIndent(entry, "", "\t")
