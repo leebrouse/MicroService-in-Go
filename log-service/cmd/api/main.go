@@ -61,9 +61,13 @@ func main() {
 	err = rpc.Register(new(RpcServer))
 	// To listen rpc request
 	go app.rpcListen()
+
+	//grpc server listen
+	go app.gRpcListen()
+
 	//start web server
 	app.serve()
-	
+
 	/*  Blocking function:
 
 	var forever chan struct{}

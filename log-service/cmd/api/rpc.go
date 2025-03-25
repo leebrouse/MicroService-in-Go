@@ -33,3 +33,5 @@ func (r *RpcServer) LogInfo(payload RpcPayload, resp *string) error {
 	*resp = "Process payload via RPC:" + payload.Name
 	return nil
 }
+
+

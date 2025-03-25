@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package logs;
+
+option go_package="/logs";
+
+// Note: use 1 not $1 in arguments
+//sub struct in the LogRequest
+message Log {
+    string name=1;
+    string data=2;
+}
+
+// LogRequest 
+message LogRequest{
+    Log LogEntry =1;
+}
+
+//LogResponse
+message LogResponse{
+    string result=1;
+}
+
+// create LogService interface and then to implentment
+service LogService{
+    rpc WriteLog(LogRequest) returns (LogResponse);
+}
