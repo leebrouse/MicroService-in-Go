@@ -1,0 +1,115 @@
+# Docker swarm configuration file
+# Note: If you want to find out the join-token, you can use this command:
+# docker swarm join-token worker 
+
+#First build : docker build -t leebrouse/broker-service:1.0.0 -f ./broker-service.dockerfile .
+#Second push : docker push leebrouse/broker-service:1.0.0 
+
+# Run command: docker stack deploy -c swarm.yaml myapp
+# Scaling service command: docker service scale myapp_broker-service=3
+
+# Update service command: docker service update --image leebrouse/log-service:1.0.1 myapp_log-service
+
+# Remove service command: docker stack rm myapp and docker swarm leave --force
+
+version: '3.8'
+
+# services
+services:
+  #Frontend-service Config 
+  frontend:
+    image: leebrouse/frontend-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  broker-service:
+    image: leebrouse/broker-service:1.0.1
+    ports:
+      - "8080:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+  
+  listener-service:
+    image: leebrouse/listener-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  authentication-service:
+    image: leebrouse/authentication-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      DSN: "host=postgres port=5432 user=postgres password=password dbname=users sslmode=disable timezone=UTC connect_timeout=5"
+
+  log-service:
+    image: leebrouse/log-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  mail-service:
+    image: leebrouse/mail-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      MAIL_DOMAIN: "localhost"
+      MAIL_HOST: "mailhog"
+      MAIL_PORT: 1025
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_ENCRYPTION: "none"
+      FROM_ADDRESS: "leebrouse7@example.com"
+      FROM_NAME:  "Lee Brouse"
+
+# DataBase
+  # Postgres config 
+  postgres:
+    image: 'postgres:latest'
+    ports:
+      - "5432:5432"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users
+    volumes:
+      - ./db-data/postgres/:/var/lib/postgresql/data/
+
+  # MongoDB config
+  mongo: 
+    image: 'mongo:latest'
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: logs
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - ./db-data/mongo/:/data/db
+
+
+  # Mailhog config
+  mailhog:
+    image: 'mailhog/mailhog:latest'
+    ports:
+      - "1025:1025"
+      - "8025:8025" # management GUI port
+
+  # RabbitMQ config
+  rabbitmq:
+    image: 'rabbitmq:latest'
+    ports:
+      - "5672:5672"
+    deploy:
+      mode: replicated
+      replicas: 1
+    volumes:
+      - ./db-data/rabbitmq/:/var/lib/rabbitmq/
