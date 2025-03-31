@@ -12,7 +12,8 @@ import (
 )
 
 // modify the webPort from 80 to 8080
-const webPort = "8080"
+// const webPort = "80"
+const webPort = "80"
 
 type Config struct {
 	Rabbit *amqp.Connection

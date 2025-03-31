@@ -16,6 +16,19 @@ version: '3.8'
 
 # services
 services:
+
+  caddy:
+    image: leebrouse/micro-caddy:1.0.1
+    deploy:
+      mode: replicated
+      replicas: 1
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
   #Frontend-service Config 
   frontend:
     image: leebrouse/frontend-service:1.0.0
@@ -25,8 +38,6 @@ services:
 
   broker-service:
     image: leebrouse/broker-service:1.0.1
-    ports:
-      - "8080:80"
     deploy:
       mode: replicated
       replicas: 1
@@ -72,7 +83,6 @@ services:
     image: 'postgres:latest'
     ports:
       - "5432:5432"
-    restart: always
     deploy:
       mode: replicated
       replicas: 1
@@ -113,3 +123,8 @@ services:
       replicas: 1
     volumes:
       - ./db-data/rabbitmq/:/var/lib/rabbitmq/
+
+volumes:
+  caddy_data:
+    external: true
+  caddy_config:

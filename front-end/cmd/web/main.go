@@ -3,9 +3,10 @@ package main
 import (
 	"embed"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
-	"text/template"
+	"os"
 )
 
 func main() {
@@ -20,11 +21,11 @@ func main() {
 	}
 }
 
-// go.embed templates
-var templatesFS *embed.FS
+//go:embed templates
+var templateFS embed.FS
 
-// 加载模板
 func render(w http.ResponseWriter, t string) {
+
 	partials := []string{
 		"templates/base.layout.html",
 		"templates/header.partial.html",
@@ -38,13 +39,19 @@ func render(w http.ResponseWriter, t string) {
 		templateSlice = append(templateSlice, x)
 	}
 
-	tmpl, err := template.ParseFS(templatesFS, templateSlice...)
+	tmpl, err := template.ParseFS(templateFS, templateSlice...)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if err = tmpl.Execute(w, nil); err != nil {
+	var data struct {
+		BrokerURL string
+	}
+
+	data.BrokerURL = os.Getenv("BROKER_URL")
+
+	if err := tmpl.Execute(w, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
